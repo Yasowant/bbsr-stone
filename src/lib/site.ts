@@ -4,6 +4,32 @@
  * the JSON-LD structured data, the sitemap and the CTAs.
  */
 
+/**
+ * Canonical origin for metadata, JSON-LD, robots.txt and the sitemap.
+ *
+ * `??` only falls back on null/undefined, so a host that defines
+ * NEXT_PUBLIC_SITE_URL as an EMPTY string (Vercel does this when the variable
+ * is added with no value) used to hand `new URL("")` an empty string and crash
+ * the production build. Treat blank or unparseable values as "not configured",
+ * and accept a bare hostname so `bbsrstone.com` works as well as the full URL.
+ */
+const FALLBACK_SITE_URL = "https://bbsrstone.com";
+
+function resolveSiteUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!configured) return FALLBACK_SITE_URL;
+
+  const withProtocol = /^https?:\/\//i.test(configured)
+    ? configured
+    : `https://${configured}`;
+
+  try {
+    return new URL(withProtocol).origin;   // also strips any trailing slash
+  } catch {
+    return FALLBACK_SITE_URL;
+  }
+}
+
 export const site = {
   name: "Bhubaneshwar Stone Pvt. Ltd.",
   shortName: "Bhubaneshwar Stone",
@@ -15,7 +41,7 @@ export const site = {
   description:
     "Bhubaneshwar Stone Pvt. Ltd. supplies stone aggregates, crushed chips in every size, metal, Bajuri, GSB, WMM, stone dust and armour rock boulders to construction projects across Odisha.",
 
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://bbsrstone.com",
+  url: resolveSiteUrl(),
 
   phone: {
     display: "+91 93383 75318",
